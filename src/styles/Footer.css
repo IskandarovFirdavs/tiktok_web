@@ -1,0 +1,46 @@
+.footer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  color: #aaa;
+}
+
+.footer p {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin: 8px 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #ccc;
+  transition: 0.3s;
+}
+
+.footer-links li:hover {
+  color: #fff;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.logout-btn:hover {
+  color: #ff3b5c;
+  transform: scale(1.05);
+}

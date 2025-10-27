@@ -1,0 +1,120 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap");
+
+:root {
+  --bg: #000;
+  --card: #0f0f0f;
+  --muted: #9b9b9b;
+  --accent: #ff0050;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #000 0%, #050505 100%);
+  padding: 24px;
+}
+
+.auth-card {
+  width: 360px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-align: center;
+}
+
+.auth-logo {
+  width: 88px;
+  margin: -6px 0 12px;
+  filter: brightness(1.2);
+}
+
+.auth-title {
+  margin: 0 0 18px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.auth-input {
+  background: #121212;
+  border: 1px solid #222;
+  padding: 12px 14px;
+  border-radius: 999px;
+  color: #eee;
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.auth-input:focus {
+  box-shadow: 0 0 0 4px rgba(255, 0, 80, 0.06);
+  border-color: rgba(255, 0, 80, 0.25);
+}
+
+.avatar-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: left;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.auth-btn {
+  background: linear-gradient(180deg, var(--accent), #ff3366);
+  border: none;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: transform 0.08s ease, box-shadow 0.12s ease;
+}
+
+.auth-btn:active {
+  transform: translateY(1px);
+}
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-footer {
+  margin-top: 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.auth-link {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.auth-error {
+  background: rgba(255, 0, 80, 0.07);
+  color: #ff808f;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: left;
+}
