@@ -12,6 +12,69 @@ body {
   overflow: hidden;
 }
 
+.replies-section {
+  margin-left: 48px;
+  margin-top: 10px;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  padding-left: 10px;
+}
+
+.reply-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.reply-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.reply-content {
+  flex: 1;
+}
+
+.reply-header {
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.reply-text {
+  color: white;
+  font-size: 14px;
+  margin: 3px 0;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.reply-input-container {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.reply-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  outline: none;
+}
+
+.post-reply-btn.active {
+  color: #fe2c55;
+  font-weight: bold;
+}
+
 /* Loading State */
 .tiktok-loading {
   display: flex;

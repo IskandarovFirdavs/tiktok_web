@@ -922,6 +922,7 @@ const Home = () => {
                         alt={comment.user?.username}
                         className="comment-avatar"
                       />
+
                       <div className="comment-content">
                         <div className="comment-header">
                           <span className="comment-username">
@@ -999,10 +1000,11 @@ const Home = () => {
                           </button>
                           <button
                             className="comment-action-btn"
-                            onClick={() => toggleReplies(comment.id)}
+                            onClick={() => toggleReplies(comment.id)} // only for reply input
                           >
                             Reply
                           </button>
+
                           {comment.user?.id === currentUser?.id && (
                             <>
                               <button
@@ -1020,6 +1022,76 @@ const Home = () => {
                                 Delete
                               </button>
                             </>
+                          )}
+                        </div>
+
+                        {/* ✅ Replies always visible */}
+                        <div className="replies-section">
+                          {comment.replies && comment.replies.length > 0 ? (
+                            <div className="replies-list">
+                              {comment.replies.map((reply) => (
+                                <div key={reply.id} className="reply-item">
+                                  <img
+                                    src={
+                                      reply.user?.avatar ||
+                                      "/default-avatar.png"
+                                    }
+                                    alt={reply.user?.username}
+                                    className="reply-avatar"
+                                  />
+                                  <div className="reply-content">
+                                    <div className="reply-header">
+                                      <span className="reply-username">
+                                        @{reply.user?.username}
+                                      </span>
+                                      <span className="reply-time">
+                                        {formatTime(reply.created_at)}
+                                      </span>
+                                    </div>
+                                    <p className="reply-text">{reply.text}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div></div>
+                          )}
+
+                          {/* ✳️ Optional: show reply input only when "Reply" clicked */}
+                          {expandedReplies[comment.id] && (
+                            <div className="reply-input-container">
+                              <input
+                                type="text"
+                                placeholder="Write a reply..."
+                                value={
+                                  replyTexts[`${post.id}-${comment.id}`] || ""
+                                }
+                                onChange={(e) =>
+                                  setReplyTexts({
+                                    ...replyTexts,
+                                    [`${post.id}-${comment.id}`]:
+                                      e.target.value,
+                                  })
+                                }
+                                onKeyPress={(e) =>
+                                  e.key === "Enter" &&
+                                  handleReplySubmit(post.id, comment.id)
+                                }
+                                className="reply-input"
+                              />
+                              <button
+                                className={`post-reply-btn ${
+                                  replyTexts[`${post.id}-${comment.id}`]?.trim()
+                                    ? "active"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  handleReplySubmit(post.id, comment.id)
+                                }
+                              >
+                                Reply
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
