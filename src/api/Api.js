@@ -172,18 +172,24 @@ export const MusicAPI = {
 export const CommentAPI = {
   list: (params = {}) => {
     const q = new URLSearchParams(params).toString();
-    return request(`/comments/${q ? "?" + q : ""}`);
+    return request(`/posts/comments/${q ? "?" + q : ""}`);
   },
   create: (postId, text) =>
-    request("/comments/", { method: "POST", body: { post: postId, text } }),
+    request("/posts/comments/", {
+      method: "POST",
+      body: { post: postId, text },
+    }),
   update: (id, data) =>
-    request(`/comments/${id}/`, { method: "PATCH", body: data }),
+    request(`/posts/comments/${id}/`, { method: "PATCH", body: data }),
   delete: (id) =>
-    request(`/comments/${id}/`, { method: "DELETE", json: false }),
+    request(`/posts/comments/${id}/`, { method: "DELETE", json: false }),
   likeToggle: (id) =>
-    request("/comment_likes/", { method: "POST", body: { comment: id } }),
+    request("/posts/comment_likes/", { method: "POST", body: { comment: id } }),
   dislikeToggle: (id) =>
-    request("/comment_dislikes/", { method: "POST", body: { comment: id } }),
+    request("/posts/comment_dislikes/", {
+      method: "POST",
+      body: { comment: id },
+    }),
 };
 
 /* ============================

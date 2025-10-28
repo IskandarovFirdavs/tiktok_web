@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { PostsAPI, AuthAPI, CommentAPI, ReplyAPI } from "../api/Api";
 import "../styles/Home.css";
+import {
+  BsHandThumbsUp,
+  BsHandThumbsUpFill,
+  BsHandThumbsDown,
+  BsHandThumbsDownFill,
+} from "react-icons/bs";
 
 // TikTok-style Icons
 const LikeIcon = ({ filled }) => (
@@ -98,26 +104,37 @@ const Home = () => {
   };
 
   useEffect(() => {
-    loadPosts();
-    loadCurrentUser();
+    const init = async () => {
+      const user = await loadCurrentUser(); // Avval user
+      if (user) await loadPosts(); // Keyin postlar
+    };
+    init();
   }, []);
-  const [followingUsers, setFollowingUsers] = useState({});
 
+  const fetchPosts = async () => {
+    if (!currentUser) {
+      const user = await loadCurrentUser();
+      if (!user) return;
+    }
+    await loadPosts();
+  };
+  const [followingUsers, setFollowingUsers] = useState({});
   const handleFollowToggle = async (userId) => {
     try {
       await AuthAPI.followToggle(userId);
       setFollowingUsers((prev) => ({
         ...prev,
-        [userId]: !prev[userId], // holatni o‘zgartiramiz
+        [userId]: !prev[userId],
       }));
     } catch (err) {
       console.error("Follow toggle error:", err);
     }
   };
-
   const loadPosts = async () => {
     try {
+      console.log("📡 Loading posts...");
       const response = await PostsAPI.list();
+
       let postsData = [];
 
       if (Array.isArray(response)) {
@@ -134,41 +151,118 @@ const Home = () => {
         }
       }
 
+      console.log("👤 Current user for posts:", currentUser);
+
       const validatedPosts = (Array.isArray(postsData) ? postsData : []).map(
-        (post) => ({
-          id: post.id || Math.random().toString(36).substr(2, 9),
-          title: post.title || "No Title",
-          description: post.description || "",
-          post: post.post || post.video || post.image || "/default-video.mp4",
-          postType:
-            post.post_type ||
-            (post.post?.includes(".mp4") ? "video" : "image") ||
-            "video",
-          user: post.user || {
-            username: "unknown",
-            avatar: "/default-avatar.png",
-            id: 0,
-          },
-          created_at: post.created_at || new Date().toISOString(),
-          likes: post.likes || [],
-          likes_count: post.likes_count || post.likes?.length || 0,
-          // Add this line - include the liked_by_current_user field from API
-          liked_by_current_user: post.liked_by_current_user || false,
-          comments: post.comments || [],
-          comments_count: post.comments_count || post.comments?.length || 0,
-          reposts_count: post.reposts_count || 0,
-          saves_count: post.saves_count || 0,
-          hashtags: post.hashtags || [],
-          music: post.music || null,
-          saved: post.saved || false,
-          reposted: post.reposted || false,
-          reposted_by: post.reposted_by || null,
-        })
+        (post) => {
+          const processedComments = (post.comments || []).map((comment) => {
+            // ✅ currentUser endi mavjud
+            const userLikesComment =
+              comment.liked_by_current_user !== undefined
+                ? comment.liked_by_current_user
+                : comment.likes?.some(
+                    (like) =>
+                      like.user === currentUser?.id ||
+                      like.user_id === currentUser?.id
+                  ) || false;
+            const userDislikesComment =
+              comment.disliked_by_current_user !== undefined
+                ? comment.disliked_by_current_user
+                : comment.dislikes?.some(
+                    (dislike) =>
+                      dislike.user === currentUser?.id ||
+                      dislike.user_id === currentUser?.id
+                  ) || false;
+
+            const processedReplies = (comment.replies || []).map((reply) => {
+              const userLikesReply =
+                reply.liked_by_current_user !== undefined
+                  ? reply.liked_by_current_user
+                  : reply.likes?.some(
+                      (like) =>
+                        like.user === currentUser?.id ||
+                        like.user_id === currentUser?.id
+                    ) || false;
+              const userDislikesReply =
+                reply.disliked_by_current_user !== undefined
+                  ? reply.disliked_by_current_user
+                  : reply.dislikes?.some(
+                      (dislike) =>
+                        dislike.user === currentUser?.id ||
+                        dislike.user_id === currentUser?.id
+                    ) || false;
+
+              return {
+                ...reply,
+                id: reply.id,
+                text: reply.text || "",
+                user: reply.user || {
+                  username: "unknown",
+                  avatar: "/default-avatar.png",
+                  id: 0,
+                },
+                created_at: reply.created_at || new Date().toISOString(),
+                likes: reply.likes || [],
+                likes_count: reply.likes_count || reply.likes?.length || 0,
+                liked_by_current_user: userLikesReply,
+                dislikes: reply.dislikes || [],
+                dislikes_count:
+                  reply.dislikes_count || reply.dislikes?.length || 0,
+                disliked_by_current_user: userDislikesReply,
+              };
+            });
+
+            return {
+              ...comment,
+              id: comment.id,
+              text: comment.text || "",
+              likes_count: comment.likes_count || comment.likes?.length || 0,
+              dislikes_count:
+                comment.dislikes_count || comment.dislikes?.length || 0,
+              liked_by_current_user: userLikesComment,
+              disliked_by_current_user: userDislikesComment,
+              // USE processedReplies here (was being overwritten before)
+              replies: processedReplies,
+              replies_count:
+                comment.replies_count || comment.replies?.length || 0,
+            };
+          });
+
+          return {
+            id: post.id || Math.random().toString(36).substr(2, 9),
+            title: post.title || "No Title",
+            description: post.description || "",
+            post: post.post || post.video || post.image || "/default-video.mp4",
+            postType:
+              post.post_type ||
+              (post.post?.includes(".mp4") ? "video" : "image") ||
+              "video",
+            user: post.user || {
+              username: "unknown",
+              avatar: "/default-avatar.png",
+              id: 0,
+            },
+            created_at: post.created_at || new Date().toISOString(),
+            likes: post.likes || [],
+            likes_count: post.likes_count || post.likes?.length || 0,
+            liked_by_current_user: post.liked_by_current_user || false,
+            comments: processedComments,
+            comments_count: post.comments_count || post.comments?.length || 0,
+            reposts_count: post.reposts_count || 0,
+            saves_count: post.saves_count || 0,
+            hashtags: post.hashtags || [],
+            music: post.music || null,
+            saved: post.saved || false,
+            reposted: post.reposted || false,
+            reposted_by: post.reposted_by || null,
+          };
+        }
       );
 
+      console.log("✅ Posts successfully loaded:", validatedPosts.length);
       setPosts(validatedPosts);
     } catch (error) {
-      console.error("Error loading posts:", error);
+      console.error("❌ Error loading posts:", error);
       setPosts([]);
     } finally {
       setLoading(false);
@@ -178,9 +272,12 @@ const Home = () => {
   const loadCurrentUser = async () => {
     try {
       const user = await AuthAPI.currentUser();
+      console.log("✅ Current user loaded:", user?.id);
       setCurrentUser(user);
+      return user;
     } catch (error) {
-      console.error("Error loading current user:", error);
+      console.error("❌ Error loading current user:", error);
+      return null;
     }
   };
 
@@ -289,25 +386,16 @@ const Home = () => {
 
   // Comment Interactions
   const handleCommentSubmit = async (postId) => {
-    const text = commentTexts[postId];
-    if (!text?.trim()) return;
+    const text = commentTexts[postId]?.trim();
+    if (!text) return;
 
     try {
-      const newComment = await CommentAPI.create(postId, text);
-      setPosts(
-        posts.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                comments: [newComment, ...post.comments],
-                comments_count: post.comments_count + 1,
-              }
-            : post
-        )
-      );
-      setCommentTexts({ ...commentTexts, [postId]: "" });
+      await CommentAPI.create(postId, text); // ✅ Send POST /posts/comments/
+      console.log("✅ Comment created!");
+      setCommentTexts((prev) => ({ ...prev, [postId]: "" }));
+      await fetchPosts(); // refresh to show new comment
     } catch (error) {
-      console.error("Error posting comment:", error);
+      console.error("❌ Failed to create comment:", error);
     }
   };
 
@@ -356,79 +444,144 @@ const Home = () => {
   };
 
   const handleCommentLike = async (commentId, postId) => {
+    const prevPosts = posts;
     try {
-      await CommentAPI.likeToggle(commentId);
-      setPosts(
-        posts.map((post) =>
+      // 1) Optimistic update
+      setPosts((prev) =>
+        prev.map((post) =>
           post.id === postId
             ? {
                 ...post,
-                comments: post.comments.map((comment) =>
-                  comment.id === commentId
+                comments: post.comments.map((c) =>
+                  c.id === commentId
                     ? {
-                        ...comment,
-                        likes: comment.likes.some(
-                          (like) => like.user === currentUser?.id
-                        )
-                          ? comment.likes.filter(
-                              (like) => like.user !== currentUser?.id
-                            )
-                          : [...comment.likes, { user: currentUser?.id }],
-                        likes_count: comment.likes.some(
-                          (like) => like.user === currentUser?.id
-                        )
-                          ? comment.likes_count - 1
-                          : comment.likes_count + 1,
+                        ...c,
+                        liked_by_current_user: !c.liked_by_current_user,
+                        disliked_by_current_user: false,
+                        likes_count: c.liked_by_current_user
+                          ? Math.max(0, (c.likes_count || 0) - 1)
+                          : (c.likes_count || 0) + 1,
+                        dislikes_count: c.disliked_by_current_user
+                          ? Math.max(0, (c.dislikes_count || 0) - 1)
+                          : c.dislikes_count,
                       }
-                    : comment
+                    : c
                 ),
               }
             : post
         )
       );
+
+      // 2) API chaqiruvi
+      const res = await CommentAPI.likeToggle(commentId);
+      // 3) Agar server authoritative comment yuborsa - merge qiling
+      const serverComment = res?.comment || res;
+      if (
+        serverComment &&
+        (serverComment.likes_count !== undefined ||
+          serverComment.liked_by_current_user !== undefined)
+      ) {
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  comments: post.comments.map((c) =>
+                    c.id === commentId
+                      ? {
+                          ...c,
+                          likes_count:
+                            serverComment.likes_count ?? c.likes_count,
+                          dislikes_count:
+                            serverComment.dislikes_count ?? c.dislikes_count,
+                          liked_by_current_user:
+                            serverComment.liked_by_current_user ??
+                            c.liked_by_current_user,
+                          disliked_by_current_user:
+                            serverComment.disliked_by_current_user ??
+                            c.disliked_by_current_user,
+                        }
+                      : c
+                  ),
+                }
+              : post
+          )
+        );
+      }
+      // Agar server hech nima qaytarmasa — optimistic state qoldiriladi (hech narsa qilinmaydi)
     } catch (error) {
-      console.error("Error liking comment:", error);
+      console.error("Like error — rolling back", error);
+      setPosts(prevPosts); // rollback
     }
   };
 
   const handleCommentDislike = async (commentId, postId) => {
+    const prevPosts = posts;
     try {
-      if (CommentAPI.dislikeToggle) {
-        await CommentAPI.dislikeToggle(commentId);
-      }
-      setPosts(
-        posts.map((post) =>
+      setPosts((prev) =>
+        prev.map((post) =>
           post.id === postId
             ? {
                 ...post,
-                comments: post.comments.map((comment) =>
-                  comment.id === commentId
+                comments: post.comments.map((c) =>
+                  c.id === commentId
                     ? {
-                        ...comment,
-                        dislikes: comment.dislikes?.some(
-                          (dislike) => dislike.user === currentUser?.id
-                        )
-                          ? comment.dislikes.filter(
-                              (dislike) => dislike.user !== currentUser?.id
-                            )
-                          : [
-                              ...(comment.dislikes || []),
-                              { user: currentUser?.id },
-                            ],
-                        dislikes_count: comment.dislikes?.some(
-                          (dislike) => dislike.user === currentUser?.id
-                        )
-                          ? (comment.dislikes_count || 0) - 1
-                          : (comment.dislikes_count || 0) + 1,
+                        ...c,
+                        disliked_by_current_user: !c.disliked_by_current_user,
+                        liked_by_current_user: false,
+                        dislikes_count: c.disliked_by_current_user
+                          ? Math.max(0, (c.dislikes_count || 0) - 1)
+                          : (c.dislikes_count || 0) + 1,
+                        likes_count: c.liked_by_current_user
+                          ? Math.max(0, (c.likes_count || 0) - 1)
+                          : c.likes_count,
                       }
-                    : comment
+                    : c
                 ),
               }
             : post
         )
       );
+
+      const res = CommentAPI.dislikeToggle
+        ? await CommentAPI.dislikeToggle(commentId)
+        : null;
+      const serverComment = res?.comment || res;
+      if (
+        serverComment &&
+        (serverComment.dislikes_count !== undefined ||
+          serverComment.disliked_by_current_user !== undefined)
+      ) {
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  comments: post.comments.map((c) =>
+                    c.id === commentId
+                      ? {
+                          ...c,
+                          likes_count:
+                            serverComment.likes_count ?? c.likes_count,
+                          dislikes_count:
+                            serverComment.dislikes_count ?? c.dislikes_count,
+                          liked_by_current_user:
+                            serverComment.liked_by_current_user ??
+                            c.liked_by_current_user,
+                          disliked_by_current_user:
+                            serverComment.disliked_by_current_user ??
+                            c.disliked_by_current_user,
+                        }
+                      : c
+                  ),
+                }
+              : post
+          )
+        );
+      }
     } catch (error) {
       console.error("Error disliking comment:", error);
+      setPosts(prevPosts);
     }
   };
 
@@ -523,44 +676,42 @@ const Home = () => {
 
   const handleReplyLike = async (replyId, postId, commentId) => {
     try {
-      await ReplyAPI.likeToggle(replyId);
-      setPosts(
-        posts.map((post) =>
+      setPosts((prev) =>
+        prev.map((post) =>
           post.id === postId
             ? {
                 ...post,
-                comments: post.comments.map((comment) =>
-                  comment.id === commentId
+                comments: post.comments.map((c) =>
+                  c.id === commentId
                     ? {
-                        ...comment,
-                        replies: comment.replies.map((reply) =>
-                          reply.id === replyId
+                        ...c,
+                        replies: c.replies.map((r) =>
+                          r.id === replyId
                             ? {
-                                ...reply,
-                                likes: reply.likes.some(
-                                  (like) => like.user === currentUser?.id
-                                )
-                                  ? reply.likes.filter(
-                                      (like) => like.user !== currentUser?.id
-                                    )
-                                  : [...reply.likes, { user: currentUser?.id }],
-                                likes_count: reply.likes.some(
-                                  (like) => like.user === currentUser?.id
-                                )
-                                  ? reply.likes_count - 1
-                                  : reply.likes_count + 1,
+                                ...r,
+                                liked_by_current_user: !r.liked_by_current_user,
+                                disliked_by_current_user: false,
+                                likes_count: r.liked_by_current_user
+                                  ? r.likes_count - 1
+                                  : r.likes_count + 1,
+                                dislikes_count: r.disliked_by_current_user
+                                  ? r.dislikes_count - 1
+                                  : r.dislikes_count,
                               }
-                            : reply
+                            : r
                         ),
                       }
-                    : comment
+                    : c
                 ),
               }
             : post
         )
       );
+
+      await ReplyAPI.likeToggle(replyId);
     } catch (error) {
-      console.error("Error liking reply:", error);
+      console.error("Error:", error);
+      await fetchPosts();
     }
   };
 
@@ -569,8 +720,9 @@ const Home = () => {
       if (ReplyAPI.dislikeToggle) {
         await ReplyAPI.dislikeToggle(replyId);
       }
-      setPosts(
-        posts.map((post) =>
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
@@ -582,22 +734,16 @@ const Home = () => {
                           reply.id === replyId
                             ? {
                                 ...reply,
-                                dislikes: reply.dislikes?.some(
-                                  (dislike) => dislike.user === currentUser?.id
-                                )
-                                  ? reply.dislikes.filter(
-                                      (dislike) =>
-                                        dislike.user !== currentUser?.id
-                                    )
-                                  : [
-                                      ...(reply.dislikes || []),
-                                      { user: currentUser?.id },
-                                    ],
-                                dislikes_count: reply.dislikes?.some(
-                                  (dislike) => dislike.user === currentUser?.id
-                                )
-                                  ? (reply.dislikes_count || 0) - 1
-                                  : (reply.dislikes_count || 0) + 1,
+                                // Toggle dislike status
+                                disliked_by_current_user:
+                                  !reply.disliked_by_current_user,
+                                likes_count: reply.liked_by_current_user
+                                  ? reply.likes_count - 1
+                                  : reply.likes_count,
+                                liked_by_current_user: false,
+                                dislikes_count: reply.disliked_by_current_user
+                                  ? reply.dislikes_count - 1
+                                  : reply.dislikes_count + 1,
                               }
                             : reply
                         ),
@@ -970,37 +1116,51 @@ const Home = () => {
 
                         {/* Comment Actions */}
                         <div className="comment-actions">
+                          {/* LIKE */}
                           <button
-                            className={`comment-action-btn ${
-                              comment.likes?.some(
-                                (like) => like.user === currentUser?.id
-                              )
-                                ? "active"
-                                : ""
-                            }`}
                             onClick={() =>
                               handleCommentLike(comment.id, post.id)
                             }
-                          >
-                            ♥ {formatCount(comment.likes_count || 0)}
-                          </button>
-                          <button
-                            className={`comment-action-btn ${
-                              comment.dislikes?.some(
-                                (dislike) => dislike.user === currentUser?.id
-                              )
-                                ? "active"
-                                : ""
+                            className={`comment-like-btn ${
+                              comment.liked_by_current_user ? "active" : ""
                             }`}
+                          >
+                            {comment.liked_by_current_user ? (
+                              <BsHandThumbsUpFill />
+                            ) : (
+                              <BsHandThumbsUp />
+                            )}
+                            <span>
+                              {comment.likes_count > 0
+                                ? comment.likes_count
+                                : ""}
+                            </span>
+                          </button>
+
+                          {/* DISLIKE */}
+                          <button
                             onClick={() =>
                               handleCommentDislike(comment.id, post.id)
                             }
+                            className={`comment-dislike-btn ${
+                              comment.disliked_by_current_user ? "active" : ""
+                            }`}
                           >
-                            ♡ {formatCount(comment.dislikes_count || 0)}
+                            {comment.disliked_by_current_user ? (
+                              <BsHandThumbsDownFill />
+                            ) : (
+                              <BsHandThumbsDown />
+                            )}
+                            <span>
+                              {comment.dislikes_count > 0
+                                ? comment.dislikes_count
+                                : ""}
+                            </span>
                           </button>
+
                           <button
                             className="comment-action-btn"
-                            onClick={() => toggleReplies(comment.id)} // only for reply input
+                            onClick={() => toggleReplies(comment.id)}
                           >
                             Reply
                           </button>
@@ -1027,7 +1187,7 @@ const Home = () => {
 
                         {/* ✅ Replies always visible */}
                         <div className="replies-section">
-                          {comment.replies && comment.replies.length > 0 ? (
+                          {comment.replies && comment.replies.length > 0 && (
                             <div className="replies-list">
                               {comment.replies.map((reply) => (
                                 <div key={reply.id} className="reply-item">
@@ -1049,12 +1209,90 @@ const Home = () => {
                                       </span>
                                     </div>
                                     <p className="reply-text">{reply.text}</p>
+
+                                    {/* Reply Actions */}
+                                    <div className="reply-actions">
+                                      <button
+                                        onClick={() =>
+                                          handleReplyLike(
+                                            reply.id,
+                                            post.id,
+                                            comment.id
+                                          )
+                                        }
+                                        className={`reply-like-btn ${
+                                          reply.liked_by_current_user
+                                            ? "active"
+                                            : ""
+                                        }`}
+                                      >
+                                        {reply.liked_by_current_user ? (
+                                          <BsHandThumbsUpFill />
+                                        ) : (
+                                          <BsHandThumbsUp />
+                                        )}
+                                        <span>
+                                          {reply.likes_count > 0
+                                            ? reply.likes_count
+                                            : ""}
+                                        </span>
+                                      </button>
+
+                                      <button
+                                        onClick={() =>
+                                          handleReplyDislike(
+                                            reply.id,
+                                            post.id,
+                                            comment.id
+                                          )
+                                        }
+                                        className={`reply-dislike-btn ${
+                                          reply.disliked_by_current_user
+                                            ? "active"
+                                            : ""
+                                        }`}
+                                      >
+                                        {reply.disliked_by_current_user ? (
+                                          <BsHandThumbsDownFill />
+                                        ) : (
+                                          <BsHandThumbsDown />
+                                        )}
+                                        <span>
+                                          {reply.dislikes_count > 0
+                                            ? reply.dislikes_count
+                                            : ""}
+                                        </span>
+                                      </button>
+
+                                      {reply.user?.id === currentUser?.id && (
+                                        <>
+                                          <button
+                                            className="reply-action-btn"
+                                            onClick={() =>
+                                              setEditingReply(reply.id)
+                                            }
+                                          >
+                                            Edit
+                                          </button>
+                                          <button
+                                            className="reply-action-btn delete"
+                                            onClick={() =>
+                                              handleReplyDelete(
+                                                post.id,
+                                                comment.id,
+                                                reply.id
+                                              )
+                                            }
+                                          >
+                                            Delete
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          ) : (
-                            <div></div>
                           )}
 
                           {/* ✳️ Optional: show reply input only when "Reply" clicked */}
@@ -1106,28 +1344,23 @@ const Home = () => {
                     alt="Your avatar"
                     className="comment-input-avatar"
                   />
-                  <div className="comment-input-wrapper">
+                  <div className="add-comment">
                     <input
                       type="text"
                       placeholder="Add a comment..."
                       value={commentTexts[post.id] || ""}
                       onChange={(e) =>
-                        setCommentTexts({
-                          ...commentTexts,
+                        setCommentTexts((prev) => ({
+                          ...prev,
                           [post.id]: e.target.value,
-                        })
+                        }))
                       }
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && handleCommentSubmit(post.id)
-                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleCommentSubmit(post.id);
+                      }}
                       className="comment-input"
                     />
-                    <button
-                      className={`post-comment-btn ${
-                        commentTexts[post.id]?.trim() ? "active" : ""
-                      }`}
-                      onClick={() => handleCommentSubmit(post.id)}
-                    >
+                    <button onClick={() => handleCommentSubmit(post.id)}>
                       Post
                     </button>
                   </div>

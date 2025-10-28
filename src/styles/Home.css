@@ -49,12 +49,6 @@ body {
   margin: 3px 0;
 }
 
-.reply-actions {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-}
-
 .reply-input-container {
   display: flex;
   align-items: center;
@@ -802,4 +796,252 @@ body {
     width: 40px;
     height: 40px;
   }
+}
+
+/* Comment Actions Styling */
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.comment-actions button {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.comment-actions button:hover {
+  background: rgba(254, 44, 85, 0.1) !important;
+}
+
+/* Like button active state */
+.comment-actions button[style*="#fe2c55"] {
+  color: #fe2c55 !important;
+}
+
+/* Dislike button active state */
+.comment-actions button[style*="#fe2c55"] {
+  color: #fe2c55 !important;
+}
+
+/* Reply Actions Styling */
+.reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.reply-actions button {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.reply-actions button:hover {
+  background: rgba(254, 44, 85, 0.1) !important;
+}
+
+/* Reply button active states */
+.reply-actions button[style*="#fe2c55"] {
+  color: #fe2c55 !important;
+}
+
+/* Comment action buttons */
+.comment-action-btn,
+.reply-action-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.comment-action-btn:hover,
+.reply-action-btn:hover {
+  color: #fe2c55;
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.comment-action-btn.delete,
+.reply-action-btn.delete {
+  color: #ff4757;
+}
+
+.comment-action-btn.delete:hover,
+.reply-action-btn.delete:hover {
+  color: #ff1744;
+  background: rgba(255, 71, 87, 0.1);
+}
+/* Comment Like/Dislike Buttons */
+.comment-like-btn,
+.comment-dislike-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: gray;
+  transition: all 0.2s ease;
+}
+
+.comment-like-btn:hover,
+.comment-dislike-btn:hover {
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.comment-like-btn.active,
+.comment-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+.comment-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+/* Reply Like/Dislike Buttons */
+.reply-like-btn,
+.reply-dislike-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: gray;
+  transition: all 0.2s ease;
+}
+.reply-like-btn:hover,
+.reply-dislike-btn:hover {
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.reply-like-btn.active,
+.reply-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+.reply-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+/* Comment Like/Dislike Buttons */
+.comment-like-btn,
+.comment-dislike-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: gray;
+  transition: all 0.2s ease;
+}
+
+.comment-like-btn:hover,
+.comment-dislike-btn:hover {
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.comment-like-btn.active,
+.comment-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+/* Reply Like/Dislike Buttons */
+.reply-like-btn,
+.reply-dislike-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: gray;
+  transition: all 0.2s ease;
+}
+
+.reply-like-btn:hover,
+.reply-dislike-btn:hover {
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.reply-like-btn.active,
+.reply-dislike-btn.active {
+  color: #fe2c55 !important;
+}
+
+.comment-actions,
+.reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.comment-action-btn,
+.reply-action-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.comment-action-btn:hover,
+.reply-action-btn:hover {
+  color: #fe2c55;
+  background: rgba(254, 44, 85, 0.1);
+}
+
+.comment-action-btn.delete,
+.reply-action-btn.delete {
+  color: #ff4757;
+}
+
+.comment-action-btn.delete:hover,
+.reply-action-btn.delete:hover {
+  color: #ff1744;
+  background: rgba(255, 71, 87, 0.1);
+}
+.comment-like-btn.active {
+  color: #fe2c55 !important;
+}
+.comment-like-btn.active svg {
+  fill: #fe2c55 !important;
 }
