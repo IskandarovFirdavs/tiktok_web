@@ -585,15 +585,17 @@ const Home = () => {
     }
   };
 
-  // Reply Interactions
   const handleReplySubmit = async (postId, commentId) => {
-    const text = replyTexts[`${postId}-${commentId}`];
-    if (!text?.trim()) return;
+    const text = replyTexts[`${postId}-${commentId}`]?.trim();
+    if (!text) return;
 
     try {
+      // ✅ Call with all three parameters: postId, commentId, text
       const newReply = await ReplyAPI.create(postId, commentId, text);
-      setPosts(
-        posts.map((post) =>
+
+      // Update the state to include the new reply
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
@@ -601,7 +603,7 @@ const Home = () => {
                   comment.id === commentId
                     ? {
                         ...comment,
-                        replies: [newReply, ...(comment.replies || [])],
+                        replies: [...(comment.replies || []), newReply],
                         replies_count: (comment.replies_count || 0) + 1,
                       }
                     : comment
@@ -610,7 +612,12 @@ const Home = () => {
             : post
         )
       );
-      setReplyTexts({ ...replyTexts, [`${postId}-${commentId}`]: "" });
+
+      // Clear the reply input
+      setReplyTexts((prev) => ({
+        ...prev,
+        [`${postId}-${commentId}`]: "",
+      }));
     } catch (error) {
       console.error("Error posting reply:", error);
     }
@@ -619,8 +626,8 @@ const Home = () => {
   const handleReplyEdit = async (postId, commentId, replyId, newText) => {
     try {
       await ReplyAPI.update(replyId, { text: newText });
-      setPosts(
-        posts.map((post) =>
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
@@ -649,8 +656,8 @@ const Home = () => {
   const handleReplyDelete = async (postId, commentId, replyId) => {
     try {
       await ReplyAPI.delete(replyId);
-      setPosts(
-        posts.map((post) =>
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
@@ -661,7 +668,10 @@ const Home = () => {
                         replies: comment.replies.filter(
                           (reply) => reply.id !== replyId
                         ),
-                        replies_count: (comment.replies_count || 0) - 1,
+                        replies_count: Math.max(
+                          0,
+                          (comment.replies_count || 0) - 1
+                        ),
                       }
                     : comment
                 ),
@@ -1088,27 +1098,29 @@ const Home = () => {
                               className="comment-edit-input"
                               id={`edit-comment-${comment.id}`}
                             />
-                            <button
-                              className="edit-save-btn"
-                              onClick={() => {
-                                const input = document.getElementById(
-                                  `edit-comment-${comment.id}`
-                                );
-                                handleCommentEdit(
-                                  post.id,
-                                  comment.id,
-                                  input.value
-                                );
-                              }}
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="edit-cancel-btn"
-                              onClick={() => setEditingComment(null)}
-                            >
-                              Cancel
-                            </button>
+                            <div style={{ display: "flex" }}>
+                              <button
+                                className="edit-save-btn"
+                                onClick={() => {
+                                  const input = document.getElementById(
+                                    `edit-comment-${comment.id}`
+                                  );
+                                  handleCommentEdit(
+                                    post.id,
+                                    comment.id,
+                                    input.value
+                                  );
+                                }}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="edit-cancel-btn"
+                                onClick={() => setEditingComment(null)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <p className="comment-text">{comment.text}</p>
@@ -1199,6 +1211,7 @@ const Home = () => {
                                     alt={reply.user?.username}
                                     className="reply-avatar"
                                   />
+
                                   <div className="reply-content">
                                     <div className="reply-header">
                                       <span className="reply-username">
@@ -1208,8 +1221,46 @@ const Home = () => {
                                         {formatTime(reply.created_at)}
                                       </span>
                                     </div>
-                                    <p className="reply-text">{reply.text}</p>
-
+                                    {/* ✅ Add this edit input section */}
+                                    {editingReply === reply.id ? (
+                                      <div className="reply-edit-mode">
+                                        <input
+                                          type="text"
+                                          defaultValue={reply.text}
+                                          className="reply-edit-input"
+                                          id={`edit-reply-${reply.id}`}
+                                        />
+                                        <div style={{ display: "flex" }}>
+                                          <button
+                                            className="edit-save-btn"
+                                            onClick={() => {
+                                              const input =
+                                                document.getElementById(
+                                                  `edit-reply-${reply.id}`
+                                                );
+                                              handleReplyEdit(
+                                                post.id,
+                                                comment.id,
+                                                reply.id,
+                                                input.value
+                                              );
+                                            }}
+                                          >
+                                            Save
+                                          </button>
+                                          <button
+                                            className="edit-cancel-btn"
+                                            onClick={() =>
+                                              setEditingReply(null)
+                                            }
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="reply-text">{reply.text}</p>
+                                    )}
                                     {/* Reply Actions */}
                                     <div className="reply-actions">
                                       <button
@@ -1296,6 +1347,7 @@ const Home = () => {
                           )}
 
                           {/* ✳️ Optional: show reply input only when "Reply" clicked */}
+                          {/* ✳️ Reply Input - Always show when "Reply" is clicked */}
                           {expandedReplies[comment.id] && (
                             <div className="reply-input-container">
                               <input
@@ -1311,23 +1363,20 @@ const Home = () => {
                                       e.target.value,
                                   })
                                 }
-                                onKeyPress={(e) =>
-                                  e.key === "Enter" &&
-                                  handleReplySubmit(post.id, comment.id)
-                                }
+                                onKeyPress={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleReplySubmit(post.id, comment.id);
+                                  }
+                                }}
                                 className="reply-input"
                               />
                               <button
-                                className={`post-reply-btn ${
-                                  replyTexts[`${post.id}-${comment.id}`]?.trim()
-                                    ? "active"
-                                    : ""
-                                }`}
+                                className="post-reply-btn active"
                                 onClick={() =>
                                   handleReplySubmit(post.id, comment.id)
                                 }
                               >
-                                Reply
+                                Post
                               </button>
                             </div>
                           )}

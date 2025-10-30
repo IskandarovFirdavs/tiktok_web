@@ -198,24 +198,28 @@ export const CommentAPI = {
 export const ReplyAPI = {
   list: (params = {}) => {
     const q = new URLSearchParams(params).toString();
-    return request(`/reply_comments/${q ? "?" + q : ""}`);
+    return request(`/posts/reply_comments/${q ? "?" + q : ""}`);
   },
   create: (postId, commentId, text) =>
-    request("/reply_comments/", {
+    request("/posts/reply_comments/", {
       method: "POST",
-      body: { post: postId, comment: commentId, text },
+      body: {
+        post: postId,
+        comment: commentId,
+        text: text,
+      },
     }),
   update: (id, data) =>
-    request(`/reply_comments/${id}/`, { method: "PATCH", body: data }),
+    request(`/posts/reply_comments/${id}/`, { method: "PATCH", body: data }),
   delete: (id) =>
-    request(`/reply_comments/${id}/`, { method: "DELETE", json: false }),
+    request(`/posts/reply_comments/${id}/`, { method: "DELETE", json: false }),
   likeToggle: (replyId) =>
-    request("/reply_comment_likes/", {
+    request("/posts/reply_comment_likes/", {
       method: "POST",
       body: { reply_comment: replyId },
     }),
   dislikeToggle: (replyId) =>
-    request("/reply_comment_dislikes/", {
+    request("/posts/reply_comment_dislikes/", {
       method: "POST",
       body: { reply_comment: replyId },
     }),

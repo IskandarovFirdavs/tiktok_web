@@ -12,63 +12,6 @@ body {
   overflow: hidden;
 }
 
-.replies-section {
-  margin-left: 48px;
-  margin-top: 10px;
-  border-left: 2px solid rgba(255, 255, 255, 0.1);
-  padding-left: 10px;
-}
-
-.reply-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.reply-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.reply-content {
-  flex: 1;
-}
-
-.reply-header {
-  display: flex;
-  gap: 6px;
-  font-size: 13px;
-  color: #aaa;
-}
-
-.reply-text {
-  color: white;
-  font-size: 14px;
-  margin: 3px 0;
-}
-
-.reply-input-container {
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.reply-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  outline: none;
-}
-
-.post-reply-btn.active {
-  color: #fe2c55;
-  font-weight: bold;
-}
-
 /* Loading State */
 .tiktok-loading {
   display: flex;
@@ -537,48 +480,6 @@ body {
   color: #fe2c55;
 }
 
-/* Comment Input */
-.comment-input-container {
-  display: flex;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid #2a2a2a;
-  align-items: flex-start;
-  background: #121212;
-  border-radius: 20px;
-}
-
-.comment-input-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.comment-input-wrapper {
-  flex: 1;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.comment-input {
-  flex: 1;
-  border: 1px solid #333;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
-  outline: none;
-  background: #1a1a1a;
-  color: #fff;
-  transition: border-color 0.2s ease;
-}
-
-.comment-input:focus {
-  border-color: #fe2c55;
-}
-
 .post-comment-btn {
   background: none;
   border: none;
@@ -626,6 +527,13 @@ body {
   object-fit: cover;
   flex-shrink: 0;
 }
+.comment-input-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
 
 .comment-content {
   flex: 1;
@@ -659,6 +567,7 @@ body {
 /* Edit Mode */
 .comment-edit-mode {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   align-items: center;
   margin: 8px 0;
@@ -673,30 +582,6 @@ body {
   background: #1a1a1a;
   color: #fff;
   outline: none;
-}
-
-.edit-save-btn,
-.edit-cancel-btn {
-  background: #fe2c55;
-  color: white;
-  border: none;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.edit-cancel-btn {
-  background: #999;
-}
-
-.edit-save-btn:hover {
-  background: #ff1744;
-}
-
-.edit-cancel-btn:hover {
-  background: #777;
 }
 
 /* Comment Actions */
@@ -1044,4 +929,269 @@ body {
 }
 .comment-like-btn.active svg {
   fill: #fe2c55 !important;
+}
+
+/* TikTok-style Edit/Cancel Buttons */
+.edit-save-btn,
+.edit-cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.edit-save-btn {
+  background: #fe2c55;
+  border-color: #fe2c55;
+}
+
+.edit-save-btn:hover {
+  background: #ff1744;
+  border-color: #ff1744;
+  transform: scale(1.05);
+}
+
+.edit-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Edit Input Fields */
+.comment-edit-input,
+.reply-edit-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.comment-edit-input:focus,
+.reply-edit-input:focus {
+  border-color: #fe2c55;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Edit Mode Containers */
+.comment-edit-mode,
+.reply-edit-mode {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: start;
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+/* Reply Input Container - TikTok Style */
+.reply-input-container {
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-left: -50px;
+}
+
+.reply-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.reply-input:focus {
+  border-color: #fe2c55;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.reply-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Post Reply Button - TikTok Style */
+.post-reply-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  text-align: center;
+}
+
+.post-reply-btn.active {
+  background: #fe2c55;
+  border-color: #fe2c55;
+  color: white;
+  cursor: pointer;
+}
+
+.post-reply-btn.active:hover {
+  background: #ff1744;
+  border-color: #ff1744;
+  transform: scale(1.05);
+}
+
+/* Main Comment Input - TikTok Style */
+.add-comment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.comment-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.comment-input:focus {
+  border-color: #fe2c55;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.comment-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.comment-input-container button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.comment-input-container button:not(:disabled) {
+  background: #fe2c55;
+  border-color: #fe2c55;
+  color: white;
+  cursor: pointer;
+}
+
+.comment-input-container button:not(:disabled):hover {
+  background: #ff1744;
+  border-color: #ff1744;
+  transform: scale(1.05);
+}
+
+/* Make the comment input button active when there's text */
+.comment-input-container input:not(:placeholder-shown) + button {
+  background: #fe2c55;
+  border-color: #fe2c55;
+  color: white;
+  cursor: pointer;
+}
+
+/* Enhanced reply section styling */
+.replies-section {
+  margin-top: 12px;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.reply-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  margin-left: -30px;
+}
+
+.reply-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.reply-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reply-content {
+  flex: 1;
+}
+
+.reply-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.reply-username {
+  font-weight: 600;
+  color: white;
+  font-size: 14px;
+}
+
+.reply-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.reply-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+/* Smooth animations */
+.comment-edit-mode,
+.reply-edit-mode,
+.reply-input-container {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
