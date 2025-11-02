@@ -146,6 +146,16 @@ export const PostsAPI = {
     request("/views/", { method: "POST", body: { post: postId } }).catch(
       () => null
     ),
+  getReposts: async (postId) => {
+    try {
+      const response = await request(`/posts/${postId}/reposts/`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching reposts:", error);
+      // Fallback - bo'sh array qaytar
+      return { reposts: [] };
+    }
+  },
 };
 
 /* ============================
@@ -275,6 +285,38 @@ export const makePostForm = ({
 export const GenreAPI = {
   list: () => request("/posts/genres/"),
 };
+/* ============================
+   💾 SAVE POSTS SYSTEM
+   ============================ */
+export const SaveAPI = {
+  list: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return request(`/posts/saves/${q ? "?" + q : ""}`);
+  },
+  create: (postId) =>
+    request("/posts/saves/", {
+      method: "POST",
+      body: { post: postId },
+    }),
+  delete: (postId) =>
+    request(`/posts/saves/${postId}/`, { method: "DELETE", json: false }),
+  toggle: (postId) =>
+    request("/posts/saves/", {
+      method: "POST",
+      body: { post: postId },
+    }),
+};
+
+/* ============================
+   🔄 REPOST SYSTEM
+   ============================ */
+export const RepostAPI = {
+  toggle: (postId) =>
+    request("/posts/reposts/", {
+      method: "POST",
+      body: { post: postId },
+    }),
+};
 
 export default {
   AuthAPI,
@@ -284,6 +326,8 @@ export default {
   CommentAPI,
   ReplyAPI,
   GenreAPI,
+  SaveAPI,
+  RepostAPI,
   logoutUser,
   makePostForm,
   setTokens,

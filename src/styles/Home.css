@@ -1195,3 +1195,251 @@ body {
     transform: translateY(0);
   }
 }
+/* Repost Modal Styles - Comment section kabi */
+.repost-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.repost-modal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  width: 400px;
+  max-height: 70vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+.repost-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+  background: #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.repost-modal-header h3 {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-modal:hover {
+  background: #333;
+  color: white;
+}
+
+.repost-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.repost-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.repost-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.repost-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  gap: 12px;
+  transition: background 0.2s ease;
+}
+
+.repost-item:hover {
+  background: #222;
+}
+
+.repost-item:last-child {
+  border-bottom: none;
+}
+
+.repost-user-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.repost-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.repost-avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #fe2c55, #25f4ee);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.repost-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.repost-username {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repost-time {
+  color: #999;
+  font-size: 12px;
+}
+
+.repost-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.repost-text p {
+  color: #ddd;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.no-repost-text {
+  color: #999 !important;
+  font-style: italic;
+}
+
+/* Loading state */
+.loading-reposts {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #fe2c55;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* No reposts state */
+.no-reposts {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-reposts-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.no-reposts span {
+  font-size: 16px;
+}
+
+.no-reposts small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Clickable count */
+.clickable-count {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.clickable-count:hover {
+  color: #fe2c55;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,13 +1,23 @@
 "use client";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { PostsAPI, AuthAPI, CommentAPI, ReplyAPI } from "../api/Api";
+import {
+  PostsAPI,
+  AuthAPI,
+  CommentAPI,
+  ReplyAPI,
+  SaveAPI,
+  RepostAPI,
+} from "../api/Api";
 import "../styles/Home.css";
 import {
   BsHandThumbsUp,
   BsHandThumbsUpFill,
   BsHandThumbsDown,
   BsHandThumbsDownFill,
+  BsBookmark,
+  BsBookmarkFill,
+  BsArrowRepeat,
 } from "react-icons/bs";
 
 // TikTok-style Icons
@@ -66,7 +76,6 @@ const SaveIcon = ({ filled }) => (
     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
   </svg>
 );
-
 const MusicIcon = () => (
   <svg
     width="24"
@@ -96,13 +105,44 @@ const Home = () => {
   const audioRefs = useRef({});
   const [isPlaying, setIsPlaying] = useState({});
   const feedRef = useRef(null);
+  const [repostModal, setRepostModal] = useState({
+    isOpen: false,
+    postId: null,
+    reposts: [],
+    loading: false,
+  });
 
-  const navigate = useNavigate();
+  const [repostUsers, setRepostUsers] = useState({});
+  const [repostHoverTimeout, setRepostHoverTimeout] = useState(null);
 
-  const handleProfileClick = (userId) => {
-    navigate(`/another_profile/${userId}`);
+  const handleRepostCountClick = async (postId) => {
+    try {
+      setRepostModal({ isOpen: true, postId, reposts: [], loading: true });
+
+      // API dan repost userlarini olish
+      const response = await PostsAPI.getReposts(postId);
+      const repostsData = response.reposts || [];
+
+      setRepostModal({
+        isOpen: true,
+        postId,
+        reposts: repostsData,
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error loading reposts:", error);
+      setRepostModal((prev) => ({ ...prev, loading: false }));
+    }
   };
 
+  const handleRepostModalClose = () => {
+    setRepostModal({
+      isOpen: false,
+      postId: null,
+      reposts: [],
+      loading: false,
+    });
+  };
   useEffect(() => {
     const init = async () => {
       const user = await loadCurrentUser(); // Avval user
@@ -130,6 +170,7 @@ const Home = () => {
       console.error("Follow toggle error:", err);
     }
   };
+
   const loadPosts = async () => {
     try {
       console.log("📡 Loading posts...");
@@ -152,6 +193,17 @@ const Home = () => {
       }
 
       console.log("👤 Current user for posts:", currentUser);
+
+      // ✅ Move this function inside loadPosts
+      const getSavedPostsFromStorage = () => {
+        try {
+          return JSON.parse(localStorage.getItem("saved_posts") || "{}");
+        } catch {
+          return {};
+        }
+      };
+
+      const savedPostsFromStorage = getSavedPostsFromStorage();
 
       const validatedPosts = (Array.isArray(postsData) ? postsData : []).map(
         (post) => {
@@ -228,6 +280,22 @@ const Home = () => {
             };
           });
 
+          // ✅ Get the saved status from localStorage
+          const isSavedInStorage = savedPostsFromStorage[post.id] || false;
+          const getRepostedPostsFromStorage = () => {
+            try {
+              return JSON.parse(localStorage.getItem("reposted_posts") || "{}");
+            } catch {
+              return {};
+            }
+          };
+
+          const repostedPostsFromStorage = getRepostedPostsFromStorage();
+
+          // In your post mapping:
+          const isRepostedInStorage =
+            repostedPostsFromStorage[post.id] || false;
+
           return {
             id: post.id || Math.random().toString(36).substr(2, 9),
             title: post.title || "No Title",
@@ -248,18 +316,33 @@ const Home = () => {
             liked_by_current_user: post.liked_by_current_user || false,
             comments: processedComments,
             comments_count: post.comments_count || post.comments?.length || 0,
-            reposts_count: post.reposts_count || 0,
             saves_count: post.saves_count || 0,
+            reposts_count: post.reposts_count || 0,
             hashtags: post.hashtags || [],
             music: post.music || null,
             saved: post.saved || false,
-            reposted: post.reposted || false,
-            reposted_by: post.reposted_by || null,
+            reposted_by_current_user:
+              post.reposted_by_current_user || isRepostedInStorage, // ✅ Fallback
+            saved_by_current_user:
+              post.saved_by_current_user || isSavedInStorage, // ✅ Fixed
           };
         }
       );
 
       console.log("✅ Posts successfully loaded:", validatedPosts.length);
+
+      // ✅ Debug: Check saved status
+      validatedPosts.forEach((post, index) => {
+        console.log(`Post ${index}:`, {
+          id: post.id,
+          saved_by_current_user: post.saved_by_current_user,
+          saves_count: post.saves_count,
+          reposted_by_current_user: post.reposted_by_current_user,
+          reposts_count: post.reposts_count,
+          title: post.title,
+        });
+      });
+
       setPosts(validatedPosts);
     } catch (error) {
       console.error("❌ Error loading posts:", error);
@@ -346,41 +429,130 @@ const Home = () => {
 
   const handleSave = async (postId) => {
     try {
-      setPosts(
-        posts.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                saved: !post.saved,
-                saves_count: post.saved
-                  ? post.saves_count - 1
-                  : post.saves_count + 1,
-              }
-            : post
-        )
-      );
+      // 1️⃣ Optimistic update first
+      const currentPost = posts.find((p) => p.id === postId);
+      if (!currentPost) return;
+
+      const updatedPosts = posts.map((post) => {
+        if (post.id !== postId) return post;
+
+        const isSaved = post.saved_by_current_user;
+        const newCount = isSaved
+          ? Math.max(0, (post.saves_count || 0) - 1)
+          : (post.saves_count || 0) + 1;
+
+        return {
+          ...post,
+          saved_by_current_user: !isSaved,
+          saves_count: newCount,
+        };
+      });
+
+      // 2️⃣ Update UI immediately
+      setPosts(updatedPosts);
+
+      // ✅ Update localStorage
+      const getSavedPostsFromStorage = () => {
+        try {
+          return JSON.parse(localStorage.getItem("saved_posts") || "{}");
+        } catch {
+          return {};
+        }
+      };
+
+      const savedPosts = getSavedPostsFromStorage();
+      const isCurrentlySaved = !posts.find((p) => p.id === postId)
+        ?.saved_by_current_user;
+      savedPosts[postId] = isCurrentlySaved;
+      localStorage.setItem("saved_posts", JSON.stringify(savedPosts));
+
+      // 3️⃣ Call API to save/unsave
+      const response = await SaveAPI.toggle(postId);
+
+      // 4️⃣ Update with server response to ensure consistency
+      if (response && response.saves_count !== undefined) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  saved_by_current_user: response.saved,
+                  saves_count: response.saves_count,
+                }
+              : post
+          )
+        );
+      }
     } catch (error) {
       console.error("Error saving post:", error);
+      await fetchPosts();
     }
   };
 
   const handleRepost = async (postId) => {
+    console.log("🔄 Reposting post:", postId);
+
     try {
-      setPosts(
-        posts.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                reposted: !post.reposted,
-                reposts_count: post.reposted
-                  ? post.reposts_count - 1
-                  : post.reposts_count + 1,
-              }
-            : post
-        )
-      );
+      // 1️⃣ Optimistic update first
+      const currentPost = posts.find((p) => p.id === postId);
+      if (!currentPost) return;
+
+      const updatedPosts = posts.map((post) => {
+        if (post.id !== postId) return post;
+
+        const isReposted = post.reposted_by_current_user;
+        const newCount = isReposted
+          ? Math.max(0, (post.reposts_count || 0) - 1)
+          : (post.reposts_count || 0) + 1;
+
+        return {
+          ...post,
+          reposted_by_current_user: !isReposted,
+          reposts_count: newCount,
+        };
+      });
+
+      // 2️⃣ Update UI immediately
+      setPosts(updatedPosts);
+
+      // ✅ Update localStorage for reposts
+      const getRepostedPostsFromStorage = () => {
+        try {
+          return JSON.parse(localStorage.getItem("reposted_posts") || "{}");
+        } catch {
+          return {};
+        }
+      };
+
+      const repostedPosts = getRepostedPostsFromStorage();
+      const isCurrentlyReposted = !posts.find((p) => p.id === postId)
+        ?.reposted_by_current_user;
+      repostedPosts[postId] = isCurrentlyReposted;
+      localStorage.setItem("reposted_posts", JSON.stringify(repostedPosts));
+
+      // 3️⃣ Call API to repost/unrepost
+      console.log("📡 Calling RepostAPI for post:", postId);
+      const response = await RepostAPI.toggle(postId);
+      console.log("✅ Repost API response:", response);
+
+      // 4️⃣ Update with server response to ensure consistency
+      if (response && response.reposts_count !== undefined) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  reposted_by_current_user: response.reposted,
+                  reposts_count: response.reposts_count,
+                }
+              : post
+          )
+        );
+      }
     } catch (error) {
-      console.error("Error reposting:", error);
+      console.error("❌ Error reposting:", error);
+      // 5️⃣ Revert optimistic update on error
+      await fetchPosts();
     }
   };
 
@@ -936,17 +1108,55 @@ const Home = () => {
                     </span>
                   </button>
 
-                  {/* Share/Repost Button */}
+                  {/* Repost Button */}
                   <button
                     className={`action-btn vertical ${
-                      post.reposted ? "active" : ""
+                      post.reposted_by_current_user ? "active" : ""
                     }`}
                     onClick={() => handleRepost(post.id)}
                   >
                     <div className="action-icon">
-                      <ShareIcon />
+                      {post.reposted_by_current_user ? (
+                        // Filled repost icon when reposted
+                        <svg
+                          width="28"
+                          height="28"
+                          viewBox="0 0 24 24"
+                          color="#fe2c55"
+                          fill="#fe2c55"
+                          stroke="#fe2c55"
+                          strokeWidth="2"
+                        >
+                          <path d="M17 1l4 4-4 4" />
+                          <path d="M3 11V9a4 4 0 014-4h14" />
+                          <path d="M7 23l-4-4 4-4" />
+                          <path d="M21 13v2a4 4 0 01-4 4H3" />
+                        </svg>
+                      ) : (
+                        // Outline repost icon when not reposted
+                        <svg
+                          width="28"
+                          height="28"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        >
+                          <path d="M17 1l4 4-4 4" />
+                          <path d="M3 11V9a4 4 0 014-4h14" />
+                          <path d="M7 23l-4-4 4-4" />
+                          <path d="M21 13v2a4 4 0 01-4 4H3" />
+                        </svg>
+                      )}
                     </div>
-                    <span className="action-count">
+                    {/* ✅ COUNT ga click qo'shamiz */}
+                    <span
+                      className="action-count clickable-count"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Buttonning o'ziga bosilishiga to'sqinlik qilish
+                        handleRepostCountClick(post.id);
+                      }}
+                    >
                       {formatCount(post.reposts_count || 0)}
                     </span>
                   </button>
@@ -954,18 +1164,25 @@ const Home = () => {
                   {/* Save Button */}
                   <button
                     className={`action-btn vertical ${
-                      post.saved ? "active" : ""
+                      post.saved_by_current_user ? "active" : ""
                     }`}
                     onClick={() => handleSave(post.id)}
                   >
                     <div className="action-icon">
-                      <SaveIcon filled={post.saved} />
+                      {post.saved_by_current_user ? (
+                        <BsBookmarkFill size={28} color="#fe2c55" />
+                      ) : (
+                        <BsBookmark size={28} color="white" />
+                      )}
                     </div>
                     <span className="action-count">
                       {formatCount(post.saves_count || 0)}
                     </span>
                   </button>
 
+                  {/* Share */}
+
+                  <ShareIcon />
                   {/* Music Cover */}
                   {post.music && (
                     <div className="music-cover">
@@ -1014,15 +1231,12 @@ const Home = () => {
                     </button>
                   )}
                 </div>
-
                 {/* Title */}
                 {post.title && <p className="video-title">{post.title}</p>}
-
                 {/* Description */}
                 {post.description && (
                   <p className="video-caption">{post.description}</p>
                 )}
-
                 {/* Hashtags */}
                 {post.hashtags && post.hashtags.length > 0 && (
                   <div className="hashtags">
@@ -1033,7 +1247,6 @@ const Home = () => {
                     ))}
                   </div>
                 )}
-
                 {/* Music Info */}
                 {post.music && (
                   <div
@@ -1046,7 +1259,6 @@ const Home = () => {
                     </span>
                   </div>
                 )}
-
                 {/* Reposted By */}
                 {post.reposted_by && (
                   <div className="reposted-by">
@@ -1388,11 +1600,6 @@ const Home = () => {
 
                 {/* Comment Input */}
                 <div className="comment-input-container">
-                  <img
-                    src={currentUser?.avatar || "/default-avatar.png"}
-                    alt="Your avatar"
-                    className="comment-input-avatar"
-                  />
                   <div className="add-comment">
                     <input
                       type="text"
@@ -1419,7 +1626,73 @@ const Home = () => {
           </div>
         ))}
       </div>
+      {/* Repost Modal - Comment section kabi */}
+      {repostModal.isOpen && (
+        <div className="repost-modal-overlay">
+          <div className="repost-modal">
+            <div className="repost-modal-header">
+              <h3>Reposted by</h3>
+              <button className="close-modal" onClick={handleRepostModalClose}>
+                ×
+              </button>
+            </div>
 
+            <div className="repost-list">
+              {repostModal.loading ? (
+                <div className="loading-reposts">
+                  <div className="loading-spinner-small"></div>
+                  Loading reposts...
+                </div>
+              ) : repostModal.reposts.length > 0 ? (
+                repostModal.reposts.map((repost) => (
+                  <div key={repost.id} className="repost-item">
+                    <div className="repost-user-info">
+                      <img
+                        src={repost.user?.avatar || "/default-avatar.png"}
+                        alt={repost.user?.username}
+                        className="repost-user-avatar"
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                          e.target.nextSibling.style.display = "flex";
+                        }}
+                      />
+                      <div
+                        className="repost-avatar-placeholder"
+                        style={{ display: "none" }}
+                      >
+                        @{repost.user?.username?.charAt(0) || "U"}
+                      </div>
+
+                      <div className="repost-user-details">
+                        <span className="repost-username">
+                          @{repost.user?.username || "unknown"}
+                        </span>
+                        <span className="repost-time">
+                          {formatTime(repost.created_at)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="repost-text">
+                      {repost.text ? (
+                        <p>"{repost.text}"</p>
+                      ) : (
+                        <p className="no-repost-text">Reposted</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-reposts">
+                  <div className="no-reposts-icon">↻</div>
+                  <span>No reposts yet</span>
+                  <small>Be the first to repost this video</small>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Hidden Audio Element for Music */}
       {posts.map(
         (post) =>
